@@ -2,6 +2,7 @@ from typing import Optional, Dict, List, Any, KeysView
 
 from django.db import models
 from django.db.models.fields.related_descriptors import ReverseManyToOneDescriptor
+from versatileimagefield.fields import VersatileImageFileDescriptor
 from .string import to_snake_case
 
 
@@ -13,7 +14,12 @@ def get_valid_fields(model: Any, tree: Dict, keys: KeysView, root: Any=None) -> 
             continue
 
         if hasattr(model, field):
-            if isinstance(getattr(model, field), ReverseManyToOneDescriptor):
+            model_field = getattr(model, field)
+
+            if isinstance(
+                model_field,
+                (ReverseManyToOneDescriptor, VersatileImageFileDescriptor)
+            ):
                 continue
 
             valid_fields.append(field)
