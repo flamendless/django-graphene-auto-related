@@ -1,10 +1,11 @@
-from typing import Optional, Dict, List, Any, KeysView, Tuple
+from typing import Any, Dict, KeysView, List, Optional, Tuple
 from pprint import pprint
 
 from django.db.models import QuerySet
 from django.db.models.fields.related_descriptors import ReverseManyToOneDescriptor
+from versatileimagefield.fields import VersatileImageFileDescriptor
 
-from saleor.core.utils.string import to_snake_case
+from string import to_snake_case
 
 
 def get_valid_fields(
@@ -21,13 +22,21 @@ def get_valid_fields(
             continue
 
         if hasattr(model, field):
-            if isinstance(getattr(model, field), ReverseManyToOneDescriptor):
+            model_field = getattr(model, field)
+
+            if isinstance(
+                model_field,
+                (ReverseManyToOneDescriptor, VersatileImageFileDescriptor),
+            ):
                 continue
 
             valid_fields.append(field)
             continue
 
         if (root is not None) and (hasattr(root, field)):
+            if field not in tree:
+                continue
+
             next_keys: KeysView = tree[field].keys()
             others, other_keys = get_valid_fields(model, tree, next_keys, root)
             if others:
@@ -71,4 +80,4 @@ def auto_related(qs: QuerySet, info, root: Any=None) -> QuerySet:
             ]
             valid_fields.extend(additional_fields)
 
-    return qs.select_related(*valid_fields)
+    return qs.select_related(*valid_fields).prefetch_related(*valid_fields)
